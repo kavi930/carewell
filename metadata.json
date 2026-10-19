@@ -1,0 +1,6 @@
+{
+  "name": "CareWell Clinic - General Physician EHR & Practice Suite",
+  "description": "HIPAA-compliant General Physician practice management system with offline sync, automated SMS prescriptions & reminders, encrypted messaging, and operational analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
