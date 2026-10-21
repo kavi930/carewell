@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { SmsService } from '../services/smsService';
 import { StorageService } from '../services/storage';
+import { showToast } from './ToastNotification';
 
 interface ServicesEnquiryModalProps {
   isOpen: boolean;
@@ -205,7 +206,7 @@ export const ServicesEnquiryModal: React.FC<ServicesEnquiryModalProps> = ({
   const handleSubmitEnquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enquiryForm.patientName.trim() || !enquiryForm.mobileNumber.trim()) {
-      alert('Please provide your name and mobile number for enquiry response.');
+      showToast('Please provide your name and mobile number for enquiry response.', 'warning');
       return;
     }
 

@@ -22,6 +22,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { Patient, Appointment, Prescription, RefillRequest } from '../types/clinic';
+import { showToast } from './ToastNotification';
 
 interface AnalyticsViewProps {
   patients: Patient[];
@@ -117,15 +118,20 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       });
     }
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CareWell_Clinic_${reportType.toUpperCase()}_Report_2026.csv`);
+    link.href = url;
+    link.download = `CareWell_Clinic_${reportType.toUpperCase()}_Report_2026.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    setTimeout(() => setIsExporting(false), 800);
+    setTimeout(() => {
+      setIsExporting(false);
+      showToast(`Generated and downloaded ${reportType.toUpperCase()} CSV report`, 'success');
+    }, 600);
   };
 
   return (

@@ -23,6 +23,7 @@ import {
 import { Prescription, UserSession } from '../types/clinic';
 import { SmsService } from '../services/smsService';
 import { StorageService } from '../services/storage';
+import { showToast } from './ToastNotification';
 
 interface PrescriptionsViewProps {
   prescriptions: Prescription[];
@@ -82,7 +83,7 @@ export const PrescriptionsView: React.FC<PrescriptionsViewProps> = ({
     );
     setReSendingId(null);
     onRefreshData();
-    alert(`SMS successfully re-dispatched to ${rx.patientMobile}`);
+    showToast(`SMS successfully re-dispatched to ${rx.patientMobile}`, 'success');
   };
 
   const activeRx = selectedRx || prescriptions[0];

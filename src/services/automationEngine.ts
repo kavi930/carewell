@@ -158,12 +158,13 @@ export class AutomationEngine {
     const apptRule = rules.find(r => r.id === 'rule-appt-reminder');
     if (apptRule && apptRule.enabled) {
       const appointments = StorageService.getAppointments();
-      const today = '2026-10-19';
-      const tomorrow = '2026-10-20';
+      const realToday = new Date().toISOString().split('T')[0];
+      const realTomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const validDates = new Set([realToday, realTomorrow, '2026-10-19', '2026-10-20']);
 
       for (const appt of appointments) {
         // If appointment is for today or tomorrow and reminder hasn't been sent automatically yet
-        if ((appt.date === today || appt.date === tomorrow) && !appt.reminderSent && appt.status !== 'Cancelled') {
+        if (validDates.has(appt.date) && !appt.reminderSent && appt.status !== 'Cancelled') {
           const smsText = SmsService.generateAppointmentReminderText(appt);
           await SmsService.dispatchSms({
             mobileNumber: appt.patientMobile,
@@ -204,6 +205,7 @@ export class AutomationEngine {
     if (followupRule && followupRule.enabled) {
       const patients = StorageService.getPatients();
       const logs = this.getLogs();
+      const todayPrefix = new Date().toISOString().split('T')[0];
 
       for (const p of patients) {
         if (p.nextFollowUpDate) {
@@ -211,7 +213,7 @@ export class AutomationEngine {
           const alreadySent = logs.some(
             l => l.ruleId === 'rule-followup-recall' &&
                  l.patientMobile === p.mobileNumber &&
-                 l.timestamp.startsWith('2026-10-19')
+                 (l.timestamp.startsWith(todayPrefix) || l.timestamp.startsWith('2026-10-19'))
           );
 
           if (!alreadySent) {

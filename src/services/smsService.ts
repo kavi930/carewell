@@ -100,13 +100,52 @@ For reschedule/queries: +91 98765 43210. Reply CANCEL if unable to attend.`;
     return newLog;
   }
 
+  private static readonly INITIAL_SMS_LOGS: SmsLogRecord[] = [
+    {
+      id: 'SMS-INIT-01',
+      recipientMobile: '+91 98101 23456',
+      recipientName: 'Rajesh Kumar',
+      messageType: 'PRESCRIPTION',
+      text: `[CAREWELL CLINIC] Prescription from Dr. Amit Sharma for Rajesh Kumar (Rx: RX-2026-1042):
+Diagnosis: Uncontrolled Hypertension with Type 2 Diabetes Mellitus
+MEDICATIONS:
+1. Telmisartan (40 mg) - 1-0-0 (Morning), Before Food for 30d.
+2. Metformin SR (500 mg) - 1-0-1 (Twice Daily), After Meals for 30d.
+3. Amlodipine (5 mg) - 0-0-1 (Night), Bedtime for 30d.
+ADVICE: Maintain 7-day home BP and morning fasting blood glucose log.
+NEXT FOLLOW-UP: 2026-10-22
+Clinic: +91 98765 43210 | Green Park, New Delhi`,
+      status: 'Delivered',
+      dispatchedAt: new Date(Date.now() - 3600000).toISOString(),
+      gatewayMessageId: 'CW-GTW-INIT01',
+      carrier: 'Airtel / Jio Healthcare SMS Hub'
+    },
+    {
+      id: 'SMS-INIT-02',
+      recipientMobile: '+91 98101 23456',
+      recipientName: 'Rajesh Kumar',
+      messageType: 'APPOINTMENT_REMINDER',
+      text: `[CAREWELL CLINIC] Reminder: Dear Rajesh Kumar, your follow-up consultation with Dr. Amit Sharma is scheduled today at 10:00 AM.
+Type: Follow-up
+Clinic: 123 Health Care Rd, Green Park, New Delhi
+For queries/rescheduling: +91 98765 43210.`,
+      status: 'Delivered',
+      dispatchedAt: new Date(Date.now() - 7200000).toISOString(),
+      gatewayMessageId: 'CW-GTW-INIT02',
+      carrier: 'Airtel / Jio Healthcare SMS Hub'
+    }
+  ];
+
   public static getSmsLogs(): SmsLogRecord[] {
     try {
       const raw = localStorage.getItem(SMS_LOGS_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {
       // ignore
     }
-    return [];
+    return this.INITIAL_SMS_LOGS;
   }
 }

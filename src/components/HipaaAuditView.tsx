@@ -23,6 +23,7 @@ import {
 import { AuditLogEntry, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { CryptoSecurityService } from '../services/crypto';
+import { showToast } from './ToastNotification';
 
 interface HipaaAuditViewProps {
   auditLogs: AuditLogEntry[];
@@ -61,22 +62,27 @@ export const HipaaAuditView: React.FC<HipaaAuditViewProps> = ({
 
   const handleExportAuditCsv = () => {
     setIsExporting(true);
-    let csv = 'data:text/csv;charset=utf-8,';
+    let csv = '';
     csv += 'Audit ID,Timestamp (UTC),User Name,Role,Action,Details,Patient MRN,Terminal / IP\n';
     filteredLogs.forEach(l => {
       csv += `"${l.id}","${l.timestamp}","${l.userName}","${l.userRole}","${l.action}","${l.details.replace(/"/g, '""')}","${l.patientMrn || ''}","${l.terminalIp}"\n`;
     });
 
-    const encodedUri = encodeURI(csv);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CareWell_HIPAA_Audit_Trail_${Date.now()}.csv`);
+    link.href = url;
+    link.download = `CareWell_HIPAA_Audit_Trail_${Date.now()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     StorageService.logAudit('AUDIT_LOG_EXPORTED', `Exported ${filteredLogs.length} HIPAA audit entries to CSV`);
-    setTimeout(() => setIsExporting(false), 600);
+    setTimeout(() => {
+      setIsExporting(false);
+      showToast(`Exported ${filteredLogs.length} HIPAA audit records to CSV`, 'success');
+    }, 600);
   };
 
   const handleDownloadBackup = () => {
@@ -86,9 +92,12 @@ export const HipaaAuditView: React.FC<HipaaAuditViewProps> = ({
     const a = document.createElement('a');
     a.href = url;
     a.download = `CareWell_Clinic_Encrypted_Backup_${Date.now()}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     StorageService.logAudit('AUDIT_LOG_EXPORTED', 'Generated and downloaded full encrypted offline JSON backup');
+    showToast('Encrypted clinical database backup downloaded successfully', 'success');
   };
 
   return (

@@ -28,6 +28,7 @@ import {
 import { Patient, VitalSignRecord, Prescription, Appointment, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { SmsService } from '../services/smsService';
+import { showToast } from './ToastNotification';
 
 interface PatientRecordsViewProps {
   patients: Patient[];
@@ -152,7 +153,7 @@ export const PatientRecordsView: React.FC<PatientRecordsViewProps> = ({
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPatient.firstName.trim() || !newPatient.mobileNumber.trim()) {
-      alert('Please provide patient name and registered mobile number.');
+      showToast('Please provide patient name and registered mobile number.', 'error');
       return;
     }
 
@@ -266,7 +267,7 @@ export const PatientRecordsView: React.FC<PatientRecordsViewProps> = ({
     StorageService.savePatient(activePatient);
 
     onRefreshData();
-    alert(`Follow-up appointment scheduled for ${dateStr} at 10:30 AM.`);
+    showToast(`Follow-up appointment scheduled for ${dateStr} at 10:30 AM.`, 'success');
   };
 
   return (

@@ -29,6 +29,7 @@ import {
 import { Appointment, Patient, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { SmsService } from '../services/smsService';
+import { showToast } from './ToastNotification';
 
 interface WhatsAppChatbotModalProps {
   isOpen: boolean;
@@ -315,11 +316,11 @@ export const WhatsAppChatbotModal: React.FC<WhatsAppChatbotModalProps> = ({
   const handleSubmitNewPatientForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPatientForm.firstName.trim()) {
-      alert('Please enter your first name.');
+      showToast('Please enter your first name.', 'warning');
       return;
     }
     if (!newPatientForm.mobileNumber.trim() || newPatientForm.mobileNumber.trim().length < 8) {
-      alert('Please enter a valid mobile number for automated SMS notifications.');
+      showToast('Please enter a valid mobile number for automated SMS notifications.', 'warning');
       return;
     }
 

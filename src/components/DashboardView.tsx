@@ -75,8 +75,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return phone.substring(0, 6) + '*****' + phone.substring(phone.length - 2);
   };
 
-  const todayStr = '2026-10-19'; // Matches the local environment timeline
-  const todayAppointments = appointments.filter(a => a.date === todayStr);
+  const realToday = new Date().toISOString().split('T')[0];
+  const todayAppointments = appointments.filter(a => a.date === realToday || a.date === '2026-10-19');
   const pendingRefills = refills.filter(r => r.status === 'pending');
   const criticalPatients = patients.filter(p => p.status === 'Critical Follow-up' || p.allergies.length > 0);
 

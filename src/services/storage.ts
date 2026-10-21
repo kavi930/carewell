@@ -635,35 +635,60 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
 ];
 
 export class StorageService {
+  private static inMemoryStore: Record<string, string> = {};
+
+  public static safeGetItem(key: string): string | null {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const val = localStorage.getItem(key);
+        if (val !== null) return val;
+      }
+    } catch {
+      // localStorage restricted or disabled
+    }
+    return this.inMemoryStore[key] ?? null;
+  }
+
+  public static safeSetItem(key: string, value: string): void {
+    this.inMemoryStore[key] = value;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, value);
+      }
+    } catch {
+      // localStorage restricted, quota exceeded, or sandboxed
+    }
+  }
+
   /**
    * Initializes local storage with seed data if not present
    */
   public static init() {
     if (typeof window === 'undefined') return;
 
-    if (!localStorage.getItem(PATIENTS_KEY)) {
-      localStorage.setItem(PATIENTS_KEY, JSON.stringify(INITIAL_PATIENTS));
+    if (!this.safeGetItem(PATIENTS_KEY)) {
+      this.safeSetItem(PATIENTS_KEY, JSON.stringify(INITIAL_PATIENTS));
     }
-    if (!localStorage.getItem(VITALS_KEY)) {
-      localStorage.setItem(VITALS_KEY, JSON.stringify(INITIAL_VITALS));
+    if (!this.safeGetItem(VITALS_KEY)) {
+      this.safeSetItem(VITALS_KEY, JSON.stringify(INITIAL_VITALS));
     }
-    if (!localStorage.getItem(PRESCRIPTIONS_KEY)) {
-      localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(INITIAL_PRESCRIPTIONS));
+    if (!this.safeGetItem(PRESCRIPTIONS_KEY)) {
+      this.safeSetItem(PRESCRIPTIONS_KEY, JSON.stringify(INITIAL_PRESCRIPTIONS));
     }
-    if (!localStorage.getItem(APPOINTMENTS_KEY)) {
-      localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(INITIAL_APPOINTMENTS));
+    if (!this.safeGetItem(APPOINTMENTS_KEY)) {
+      this.safeSetItem(APPOINTMENTS_KEY, JSON.stringify(INITIAL_APPOINTMENTS));
     }
-    if (!localStorage.getItem(REFILLS_KEY)) {
-      localStorage.setItem(REFILLS_KEY, JSON.stringify(INITIAL_REFILLS));
+    if (!this.safeGetItem(REFILLS_KEY)) {
+      this.safeSetItem(REFILLS_KEY, JSON.stringify(INITIAL_REFILLS));
     }
-    if (!localStorage.getItem(MESSAGES_KEY)) {
-      localStorage.setItem(MESSAGES_KEY, JSON.stringify(INITIAL_MESSAGES));
+    if (!this.safeGetItem(MESSAGES_KEY)) {
+      this.safeSetItem(MESSAGES_KEY, JSON.stringify(INITIAL_MESSAGES));
     }
-    if (!localStorage.getItem(AUDIT_KEY)) {
-      localStorage.setItem(AUDIT_KEY, JSON.stringify(INITIAL_AUDIT_LOGS));
+    if (!this.safeGetItem(AUDIT_KEY)) {
+      this.safeSetItem(AUDIT_KEY, JSON.stringify(INITIAL_AUDIT_LOGS));
     }
-    if (!localStorage.getItem(CURRENT_USER_KEY)) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_USERS[0]));
+    if (!this.safeGetItem(CURRENT_USER_KEY)) {
+      this.safeSetItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_USERS[0]));
     }
   }
 
@@ -671,7 +696,7 @@ export class StorageService {
   public static getPatients(): Patient[] {
     this.init();
     try {
-      const data = localStorage.getItem(PATIENTS_KEY);
+      const data = this.safeGetItem(PATIENTS_KEY);
       return data ? JSON.parse(data) : INITIAL_PATIENTS;
     } catch {
       return INITIAL_PATIENTS;
@@ -688,7 +713,7 @@ export class StorageService {
     } else {
       updated = [patient, ...list];
     }
-    localStorage.setItem(PATIENTS_KEY, JSON.stringify(updated));
+    this.safeSetItem(PATIENTS_KEY, JSON.stringify(updated));
     this.queueSync('PATIENT_MUTATION', patient.id);
   }
 
@@ -696,7 +721,7 @@ export class StorageService {
   public static getVitals(patientId?: string): VitalSignRecord[] {
     this.init();
     try {
-      const data = localStorage.getItem(VITALS_KEY);
+      const data = this.safeGetItem(VITALS_KEY);
       const all: VitalSignRecord[] = data ? JSON.parse(data) : INITIAL_VITALS;
       if (patientId) {
         return all.filter(v => v.patientId === patientId);
@@ -710,7 +735,7 @@ export class StorageService {
   public static addVital(vital: VitalSignRecord): void {
     const all = this.getVitals();
     const updated = [vital, ...all];
-    localStorage.setItem(VITALS_KEY, JSON.stringify(updated));
+    this.safeSetItem(VITALS_KEY, JSON.stringify(updated));
     this.queueSync('VITAL_MUTATION', vital.id);
   }
 
@@ -718,7 +743,7 @@ export class StorageService {
   public static getPrescriptions(patientId?: string): Prescription[] {
     this.init();
     try {
-      const data = localStorage.getItem(PRESCRIPTIONS_KEY);
+      const data = this.safeGetItem(PRESCRIPTIONS_KEY);
       const all: Prescription[] = data ? JSON.parse(data) : INITIAL_PRESCRIPTIONS;
       if (patientId) {
         return all.filter(p => p.patientId === patientId);
@@ -739,7 +764,7 @@ export class StorageService {
     } else {
       updated = [rx, ...all];
     }
-    localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(updated));
+    this.safeSetItem(PRESCRIPTIONS_KEY, JSON.stringify(updated));
     this.queueSync('PRESCRIPTION_MUTATION', rx.id);
   }
 
@@ -747,7 +772,7 @@ export class StorageService {
   public static getAppointments(date?: string): Appointment[] {
     this.init();
     try {
-      const data = localStorage.getItem(APPOINTMENTS_KEY);
+      const data = this.safeGetItem(APPOINTMENTS_KEY);
       const all: Appointment[] = data ? JSON.parse(data) : INITIAL_APPOINTMENTS;
       if (date) {
         return all.filter(a => a.date === date);
@@ -768,7 +793,7 @@ export class StorageService {
     } else {
       updated = [appt, ...all];
     }
-    localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(updated));
+    this.safeSetItem(APPOINTMENTS_KEY, JSON.stringify(updated));
     this.queueSync('APPOINTMENT_MUTATION', appt.id);
   }
 
@@ -776,7 +801,7 @@ export class StorageService {
   public static getRefills(): RefillRequest[] {
     this.init();
     try {
-      const data = localStorage.getItem(REFILLS_KEY);
+      const data = this.safeGetItem(REFILLS_KEY);
       return data ? JSON.parse(data) : INITIAL_REFILLS;
     } catch {
       return INITIAL_REFILLS;
@@ -793,7 +818,7 @@ export class StorageService {
     } else {
       updated = [refill, ...all];
     }
-    localStorage.setItem(REFILLS_KEY, JSON.stringify(updated));
+    this.safeSetItem(REFILLS_KEY, JSON.stringify(updated));
     this.queueSync('REFILL_MUTATION', refill.id);
   }
 
@@ -801,7 +826,7 @@ export class StorageService {
   public static getMessages(channel?: 'patient' | 'internal_staff', threadId?: string): SecureMessage[] {
     this.init();
     try {
-      const data = localStorage.getItem(MESSAGES_KEY);
+      const data = this.safeGetItem(MESSAGES_KEY);
       let all: SecureMessage[] = data ? JSON.parse(data) : INITIAL_MESSAGES;
       if (channel) {
         all = all.filter(m => m.channel === channel);
@@ -818,7 +843,7 @@ export class StorageService {
   public static addMessage(msg: SecureMessage): void {
     const all = this.getMessages();
     const updated = [...all, msg];
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(updated));
+    this.safeSetItem(MESSAGES_KEY, JSON.stringify(updated));
     this.queueSync('MESSAGE_MUTATION', msg.id);
   }
 
@@ -826,7 +851,7 @@ export class StorageService {
   public static getAuditLogs(): AuditLogEntry[] {
     this.init();
     try {
-      const data = localStorage.getItem(AUDIT_KEY);
+      const data = this.safeGetItem(AUDIT_KEY);
       return data ? JSON.parse(data) : INITIAL_AUDIT_LOGS;
     } catch {
       return INITIAL_AUDIT_LOGS;
@@ -849,14 +874,14 @@ export class StorageService {
     };
     const logs = this.getAuditLogs();
     const updated = [entry, ...logs].slice(0, 500); // Retain 500 records
-    localStorage.setItem(AUDIT_KEY, JSON.stringify(updated));
+    this.safeSetItem(AUDIT_KEY, JSON.stringify(updated));
   }
 
   // Current active user / role
   public static getCurrentUser(): UserSession {
     this.init();
     try {
-      const data = localStorage.getItem(CURRENT_USER_KEY);
+      const data = this.safeGetItem(CURRENT_USER_KEY);
       return data ? JSON.parse(data) : DEFAULT_USERS[0];
     } catch {
       return DEFAULT_USERS[0];
@@ -864,16 +889,16 @@ export class StorageService {
   }
 
   public static setCurrentUser(user: UserSession): void {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    this.safeSetItem(CURRENT_USER_KEY, JSON.stringify(user));
   }
 
   // Sync Queue for Offline Support
   public static queueSync(type: string, entityId: string): void {
     try {
-      const raw = localStorage.getItem(SYNC_QUEUE_KEY);
+      const raw = this.safeGetItem(SYNC_QUEUE_KEY);
       const queue: { type: string; entityId: string; timestamp: string }[] = raw ? JSON.parse(raw) : [];
       queue.push({ type, entityId, timestamp: new Date().toISOString() });
-      localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+      this.safeSetItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
     } catch {
       // ignore
     }
@@ -881,7 +906,7 @@ export class StorageService {
 
   public static getPendingSyncCount(): number {
     try {
-      const raw = localStorage.getItem(SYNC_QUEUE_KEY);
+      const raw = this.safeGetItem(SYNC_QUEUE_KEY);
       return raw ? JSON.parse(raw).length : 0;
     } catch {
       return 0;
@@ -889,7 +914,7 @@ export class StorageService {
   }
 
   public static clearSyncQueue(): void {
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify([]));
+    this.safeSetItem(SYNC_QUEUE_KEY, JSON.stringify([]));
   }
 
   // Backup & Export (Encrypted JSON)

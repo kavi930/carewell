@@ -24,6 +24,7 @@ import {
 import { SecureMessage, UserSession, Patient } from '../types/clinic';
 import { CryptoSecurityService } from '../services/crypto';
 import { StorageService } from '../services/storage';
+import { showToast } from './ToastNotification';
 
 interface SecureMessagingViewProps {
   messages: SecureMessage[];
@@ -55,7 +56,12 @@ export const SecureMessagingView: React.FC<SecureMessagingViewProps> = ({
   const channelMessages = messages.filter(m => m.channel === activeChannel);
 
   // Group threads
-  const threads = Array.from(new Set(channelMessages.map(m => m.threadId))).map(threadId => {
+  const availableThreadIds = Array.from(new Set(channelMessages.map(m => m.threadId)));
+  const currentThreadId = availableThreadIds.includes(selectedThreadId)
+    ? selectedThreadId
+    : (availableThreadIds[0] || selectedThreadId);
+
+  const threads = availableThreadIds.map(threadId => {
     const threadMsgs = channelMessages.filter(m => m.threadId === threadId);
     const lastMsg = threadMsgs[threadMsgs.length - 1];
     return {
@@ -66,7 +72,7 @@ export const SecureMessagingView: React.FC<SecureMessagingViewProps> = ({
     };
   });
 
-  const activeThreadMessages = channelMessages.filter(m => m.threadId === selectedThreadId);
+  const activeThreadMessages = channelMessages.filter(m => m.threadId === currentThreadId);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +100,7 @@ export const SecureMessagingView: React.FC<SecureMessagingViewProps> = ({
     const newMsg: SecureMessage = {
       id: `msg-${Date.now()}`,
       channel: activeChannel,
-      threadId: selectedThreadId,
+      threadId: currentThreadId,
       senderId: currentUser.id,
       senderName: `${currentUser.name} (${currentUser.role})`,
       senderRole: currentUser.role,
@@ -124,6 +130,7 @@ export const SecureMessagingView: React.FC<SecureMessagingViewProps> = ({
     setAttachmentType(null);
     setIsEncrypting(false);
     onRefreshData();
+    showToast(`Encrypted message sent via ${activeChannel === 'patient' ? 'Patient Portal' : 'Staff Handoff'}`, 'success');
   };
 
   return (

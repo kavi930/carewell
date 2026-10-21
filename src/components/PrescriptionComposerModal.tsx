@@ -22,6 +22,7 @@ import {
 import { Patient, Prescription, PrescriptionMedicine, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { SmsService } from '../services/smsService';
+import { showToast } from './ToastNotification';
 
 interface PrescriptionComposerModalProps {
   isOpen: boolean;
@@ -145,7 +146,7 @@ export const PrescriptionComposerModal: React.FC<PrescriptionComposerModalProps>
     e.preventDefault();
     if (!patient) return;
     if (medicines.some(m => !m.name.trim())) {
-      alert('Please specify drug names for all prescribed medications.');
+      showToast('Please specify drug names for all prescribed medications.', 'warning');
       return;
     }
 
@@ -248,6 +249,7 @@ export const PrescriptionComposerModal: React.FC<PrescriptionComposerModalProps>
     });
 
     setIsSending(false);
+    showToast(`Prescription ${newRx.prescriptionNumber} created & SMS sent to ${patient.mobileNumber}`, 'success');
     onPrescriptionCreated(newRx);
     onClose();
   };

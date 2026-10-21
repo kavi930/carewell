@@ -22,6 +22,7 @@ import {
 import { RefillRequest, Patient, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { SmsService } from '../services/smsService';
+import { showToast } from './ToastNotification';
 
 interface RefillsViewProps {
   refills: RefillRequest[];
@@ -99,6 +100,7 @@ export const RefillsView: React.FC<RefillsViewProps> = ({
 
     setActionLoadingId(null);
     onRefreshData();
+    showToast(`Refill approved & notification dispatched to ${refill.patientMobile}`, 'success');
   };
 
   const handleReject = async (refill: RefillRequest) => {
@@ -124,12 +126,16 @@ export const RefillsView: React.FC<RefillsViewProps> = ({
 
     setActionLoadingId(null);
     onRefreshData();
+    showToast(`Consultation requirement alert sent to ${refill.patientMobile}`, 'info');
   };
 
   const handleCreateRefill = (e: React.FormEvent) => {
     e.preventDefault();
-    const patient = patients.find(p => p.id === newRefill.patientId);
-    if (!patient) return;
+    const patient = patients.find(p => p.id === newRefill.patientId) || patients[0];
+    if (!patient) {
+      showToast('Please select a patient before creating a refill request.', 'warning');
+      return;
+    }
 
     const created: RefillRequest = {
       id: `ref-${Date.now()}`,
@@ -148,13 +154,14 @@ export const RefillsView: React.FC<RefillsViewProps> = ({
 
     StorageService.updateRefill(created);
     StorageService.logAudit(
-      'REFILL_REQUEST_APPROVED',
+      'REFILL_REQUEST_SUBMITTED',
       `Logged refill request for ${created.medicineName} for ${created.patientName}`,
       created.patientId
     );
 
     onRefreshData();
     setShowNewRefillModal(false);
+    showToast(`Refill request logged for ${created.patientName}`, 'success');
   };
 
   return (

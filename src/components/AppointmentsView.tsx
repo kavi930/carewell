@@ -25,6 +25,7 @@ import {
 import { Appointment, Patient, UserSession } from '../types/clinic';
 import { StorageService } from '../services/storage';
 import { SmsService } from '../services/smsService';
+import { showToast } from './ToastNotification';
 
 interface AppointmentsViewProps {
   appointments: Appointment[];
@@ -91,11 +92,18 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
     return true;
   });
 
-  // Shift date helper
+  // Timezone-safe Shift date helper
   const handleShiftDate = (days: number) => {
-    const current = new Date(selectedDate);
+    const parts = selectedDate.split('-').map(Number);
+    const year = parts[0] || 2026;
+    const month = (parts[1] || 1) - 1;
+    const day = parts[2] || 1;
+    const current = new Date(year, month, day);
     current.setDate(current.getDate() + days);
-    setSelectedDate(current.toISOString().split('T')[0]);
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, '0');
+    const d = String(current.getDate()).padStart(2, '0');
+    setSelectedDate(`${y}-${m}-${d}`);
   };
 
   // Dispatch reminder SMS for an appointment
@@ -117,6 +125,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
     
     setSendingSmsId(null);
     onRefreshData();
+    showToast(`Automated SMS reminder dispatched to ${appt.patientMobile}`, 'success');
   };
 
   // Update appointment status
@@ -130,8 +139,11 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
   // Create new appointment
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const patient = patients.find(p => p.id === newAppt.patientId);
-    if (!patient) return;
+    const patient = patients.find(p => p.id === newAppt.patientId) || patients[0];
+    if (!patient) {
+      showToast('Please register a patient before scheduling an appointment.', 'warning');
+      return;
+    }
 
     const created: Appointment = {
       id: `apt-${Date.now()}`,
@@ -172,6 +184,7 @@ export const AppointmentsView: React.FC<AppointmentsViewProps> = ({
 
     onRefreshData();
     setShowNewModal(false);
+    showToast(`Appointment scheduled & SMS reminder dispatched to ${created.patientMobile}`, 'success');
   };
 
   return (

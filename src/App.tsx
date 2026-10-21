@@ -54,6 +54,7 @@ import { WhatsAppChatbotModal } from './components/WhatsAppChatbotModal';
 import { ServicesEnquiryModal } from './components/ServicesEnquiryModal';
 import { AutomationEngine } from './services/automationEngine';
 import { AutomationControlCenterModal } from './components/AutomationControlCenterModal';
+import { ToastNotificationContainer, showToast } from './components/ToastNotification';
 
 export default function App() {
   // Navigation State
@@ -140,7 +141,7 @@ export default function App() {
     StorageService.clearSyncQueue();
     setPendingSyncCount(0);
     loadData();
-    alert('Synchronization complete! All offline clinical notes and prescriptions are now securely synced.');
+    showToast('Synchronization complete! All offline clinical notes and prescriptions are now securely synced.', 'success');
   };
 
   const handleToggleOnline = () => {
@@ -178,6 +179,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col antialiased">
       
+      {/* Toast Notification Banner Container */}
+      <ToastNotificationContainer />
+
       {/* HIPAA Terminal Lock Modal */}
       <HipaaLockModal
         isLocked={isLocked}
